@@ -41,6 +41,33 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_sessions: {
+        Row: {
+          character_id: string
+          created_at: string
+          id: string
+          name: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          character_id: string
+          created_at?: string
+          id?: string
+          name?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          character_id?: string
+          created_at?: string
+          id?: string
+          name?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       group_chats: {
         Row: {
           character_id: string
