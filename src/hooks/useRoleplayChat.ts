@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -15,6 +15,7 @@ export function useRoleplayChat(characterId: string) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const cooldownUntilRef = useRef<number>(0);
 
   // Load existing messages and get user
   useEffect(() => {
@@ -55,6 +56,12 @@ export function useRoleplayChat(characterId: string) {
   }, [userId, characterId]);
 
   const regenerateFromIndex = useCallback(async (messageIndex: number, updatedMessages: Message[]) => {
+    const remainingMs = cooldownUntilRef.current - Date.now();
+    if (remainingMs > 0) {
+      toast.error(`Please wait ${Math.ceil(remainingMs / 1000)}s and try again.`);
+      return;
+    }
+
     setIsLoading(true);
     let assistantContent = "";
 
@@ -99,14 +106,27 @@ export function useRoleplayChat(characterId: string) {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = await response.json().catch(() => ({} as any));
+
         if (response.status === 429) {
-          toast.error("Rate limit exceeded. Please wait a moment.");
-        } else if (response.status === 402) {
-          toast.error("Usage limit reached.");
+          const retryAfterHeader = response.headers.get("Retry-After");
+          const retryAfterSeconds =
+            Number(retryAfterHeader) ||
+            (typeof (errorData as any).retryAfterSeconds === "number"
+              ? (errorData as any).retryAfterSeconds
+              : Number((errorData as any).retryAfterSeconds));
+
+          if (Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0) {
+            cooldownUntilRef.current = Date.now() + Math.ceil(retryAfterSeconds) * 1000;
+            toast.error(`Rate limited. Try again in ${Math.ceil(retryAfterSeconds)}s.`);
+          } else {
+            cooldownUntilRef.current = Date.now() + 5000;
+            toast.error((errorData as any).error || "Rate limited. Please wait a moment.");
+          }
         } else {
-          toast.error(errorData.error || "Failed to get response");
+          toast.error((errorData as any).error || "Failed to get response");
         }
+
         setIsLoading(false);
         return;
       }
@@ -193,6 +213,12 @@ export function useRoleplayChat(characterId: string) {
   }, [messages, userId, characterId, saveMessage, regenerateFromIndex]);
 
   const sendMessage = useCallback(async (content: string, imageUrl?: string) => {
+    const remainingMs = cooldownUntilRef.current - Date.now();
+    if (remainingMs > 0) {
+      toast.error(`Please wait ${Math.ceil(remainingMs / 1000)}s and try again.`);
+      return;
+    }
+
     const userMessage: Message = { role: "user", content, imageUrl };
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
@@ -249,14 +275,27 @@ export function useRoleplayChat(characterId: string) {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = await response.json().catch(() => ({} as any));
+
         if (response.status === 429) {
-          toast.error("Rate limit exceeded. Please wait a moment.");
-        } else if (response.status === 402) {
-          toast.error("Usage limit reached. Please check your account.");
+          const retryAfterHeader = response.headers.get("Retry-After");
+          const retryAfterSeconds =
+            Number(retryAfterHeader) ||
+            (typeof (errorData as any).retryAfterSeconds === "number"
+              ? (errorData as any).retryAfterSeconds
+              : Number((errorData as any).retryAfterSeconds));
+
+          if (Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0) {
+            cooldownUntilRef.current = Date.now() + Math.ceil(retryAfterSeconds) * 1000;
+            toast.error(`Rate limited. Try again in ${Math.ceil(retryAfterSeconds)}s.`);
+          } else {
+            cooldownUntilRef.current = Date.now() + 5000;
+            toast.error((errorData as any).error || "Rate limited. Please wait a moment.");
+          }
         } else {
-          toast.error(errorData.error || "Failed to get response");
+          toast.error((errorData as any).error || "Failed to get response");
         }
+
         setIsLoading(false);
         return;
       }
