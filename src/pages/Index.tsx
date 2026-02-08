@@ -1,14 +1,84 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Sparkles, MessageCircle } from "lucide-react";
+import { characters } from "@/lib/characters";
+import { CharacterCard } from "@/components/CharacterCard";
 
-const Index = () => {
+export default function Index() {
+  const navigate = useNavigate();
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen">
+      {/* Hero Section */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 gradient-hero" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent" />
+        
+        <div className="relative max-w-6xl mx-auto px-4 pt-20 pb-16 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-6">
+              <Sparkles className="w-4 h-4 text-primary" />
+              <span className="text-sm text-muted-foreground">AI-Powered Roleplay</span>
+            </div>
+            
+            <h1 className="font-display text-5xl md:text-7xl font-bold mb-6 tracking-tight">
+              <span className="bg-gradient-to-r from-foreground via-primary to-accent bg-clip-text text-transparent">
+                Enter New Worlds
+              </span>
+            </h1>
+            
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
+              Immerse yourself in captivating conversations with unique AI characters. 
+              From mystical elves to futuristic companions, every story awaits.
+            </p>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3 }}
+              className="flex items-center justify-center gap-2 text-muted-foreground"
+            >
+              <MessageCircle className="w-5 h-5" />
+              <span>Choose a character to begin</span>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Characters Grid */}
+      <section className="max-w-6xl mx-auto px-4 pb-20">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          className="grid grid-cols-1 md:grid-cols-2 gap-6"
+        >
+          {characters.map((character, index) => (
+            <motion.div
+              key={character.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 + index * 0.1 }}
+            >
+              <CharacterCard
+                character={character}
+                onClick={() => navigate(`/chat/${character.id}`)}
+              />
+            </motion.div>
+          ))}
+        </motion.div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-border py-8">
+        <div className="max-w-6xl mx-auto px-4 text-center text-sm text-muted-foreground">
+          <p>Powered by AI • Conversations are fictional and for entertainment</p>
+        </div>
+      </footer>
     </div>
   );
-};
-
-export default Index;
+}
