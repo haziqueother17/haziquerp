@@ -1,14 +1,30 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Sparkles, MessageCircle } from "lucide-react";
+import { Sparkles, MessageCircle, LogOut } from "lucide-react";
 import { characters } from "@/lib/characters";
 import { CharacterCard } from "@/components/CharacterCard";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
 
 export default function Index() {
   const navigate = useNavigate();
+  const { user, signOut } = useAuth();
 
   return (
     <div className="min-h-screen">
+      {/* Header with logout */}
+      <header className="absolute top-0 right-0 p-4 z-10">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={signOut}
+          className="text-muted-foreground hover:text-foreground"
+        >
+          <LogOut className="w-4 h-4 mr-2" />
+          Sign Out
+        </Button>
+      </header>
+
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 gradient-hero" />
