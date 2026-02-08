@@ -67,7 +67,7 @@ export const characters: Character[] = [
     id: "emilia",
     name: "Emilia",
     title: "The Stunning Beauty",
-    description: "A gorgeous woman in her mid-30s with a captivating presence. She's confident, alluring, and has eyes only for Hazique, though she keeps her feelings hidden.",
+    description: "A gorgeous former actress in her mid-30s with a captivating presence and curvy figure. She's confident, alluring, and completely devoted to Hazique.",
     avatar: "💋",
     color: "from-rose-500 to-red-600",
     tags: ["Alluring", "Confident", "Devoted"],
