@@ -116,11 +116,12 @@ ROLEPLAY RULES:
     }
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?alt=sse&key=${GEMINI_API_KEY}`,
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?alt=sse",
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "x-goog-api-key": GEMINI_API_KEY,
         },
         body: JSON.stringify({
           contents: geminiContents,
@@ -135,27 +136,63 @@ ROLEPLAY RULES:
     if (!response.ok) {
       const errorText = await response.text();
       console.error("Gemini API error:", response.status, errorText);
-      
-      // Handle rate limiting
+
+      const extractRetryAfterSeconds = (raw: string): number | null => {
+        try {
+          const parsed = JSON.parse(raw);
+          const details = parsed?.error?.details;
+          if (Array.isArray(details)) {
+            const retry = details.find((d: any) =>
+              typeof d?.["@type"] === "string" && d["@type"].includes("RetryInfo")
+            );
+            const retryDelay = retry?.retryDelay as string | undefined;
+            if (typeof retryDelay === "string") {
+              const m = retryDelay.match(/([0-9.]+)s/);
+              if (m) return Math.ceil(Number(m[1]));
+            }
+          }
+        } catch {
+          // ignore
+        }
+
+        const m = raw.match(/retry in ([0-9.]+)s/i);
+        if (m) return Math.ceil(Number(m[1]));
+        return null;
+      };
+
+      const retryAfterSeconds = extractRetryAfterSeconds(errorText);
+
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Too many requests. Please wait a moment." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        const headers: Record<string, string> = {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+        };
+        if (retryAfterSeconds) headers["Retry-After"] = String(retryAfterSeconds);
+
+        const zeroQuota = /limit:\s*0\b/i.test(errorText);
+        const message = zeroQuota
+          ? "Your Gemini API quota for this key/project is 0. Enable billing/quota, then try again."
+          : retryAfterSeconds
+            ? `Rate limited. Try again in ${retryAfterSeconds}s.`
+            : "Rate limited. Please wait and try again.";
+
+        return new Response(
+          JSON.stringify({
+            error: message,
+            errorCode: zeroQuota ? "quota_unavailable" : "rate_limited",
+            retryAfterSeconds: retryAfterSeconds ?? undefined,
+          }),
+          { status: 429, headers }
+        );
       }
-      
-      // Handle quota errors
-      if (response.status === 403 || errorText.includes("quota")) {
-        return new Response(JSON.stringify({ error: "API quota exceeded. Please check your Google Cloud billing." }), {
-          status: 402,
+
+      return new Response(
+        JSON.stringify({ error: "AI service temporarily unavailable. Please try again." }),
+        {
+          status: 503,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      
-      return new Response(JSON.stringify({ error: "AI service temporarily unavailable. Please try again." }), {
-        status: 503,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+        }
+      );
     }
 
     // Transform Gemini SSE to OpenAI-compatible SSE format

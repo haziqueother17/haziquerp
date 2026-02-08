@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -22,6 +22,7 @@ export function useGroupChat(groupId: string) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const cooldownUntilRef = useRef<number>(0);
   const [userId, setUserId] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [characterId, setCharacterId] = useState<string>("luna");
@@ -142,6 +143,14 @@ export function useGroupChat(groupId: string) {
 
   const sendMessage = useCallback(async (content: string) => {
     if (!userId) return;
+
+    const remainingMs = cooldownUntilRef.current - Date.now();
+    if (remainingMs > 0) {
+      toast.error(`Please wait ${Math.ceil(remainingMs / 1000)}s and try again.`);
+      return;
+    }
+    if (isLoading) return;
+
     setIsLoading(true);
 
     // Insert user message (realtime will update UI)
@@ -182,7 +191,28 @@ export function useGroupChat(groupId: string) {
       });
 
       if (!response.ok || !response.body) {
-        throw new Error("Failed to get response");
+        const errorData = await response.json().catch(() => ({} as any));
+
+        if (response.status === 429) {
+          const retryAfterHeader = response.headers.get("Retry-After");
+          const retryAfterSeconds =
+            Number(retryAfterHeader) ||
+            (typeof (errorData as any).retryAfterSeconds === "number"
+              ? (errorData as any).retryAfterSeconds
+              : Number((errorData as any).retryAfterSeconds));
+
+          if (Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0) {
+            cooldownUntilRef.current = Date.now() + Math.ceil(retryAfterSeconds) * 1000;
+            toast.error(`Rate limited. Try again in ${Math.ceil(retryAfterSeconds)}s.`);
+          } else {
+            cooldownUntilRef.current = Date.now() + 5000;
+            toast.error((errorData as any).error || "Rate limited. Please wait a moment.");
+          }
+        } else {
+          toast.error((errorData as any).error || "Failed to get response");
+        }
+
+        return;
       }
 
       const reader = response.body.getReader();
@@ -235,7 +265,7 @@ export function useGroupChat(groupId: string) {
     } finally {
       setIsLoading(false);
     }
-  }, [messages, characterId, groupId, userId, userName]);
+  }, [messages, characterId, groupId, userId, userName, isLoading]);
 
   return { 
     messages, 
