@@ -10,6 +10,15 @@ export interface Character {
 
 export const characters: Character[] = [
   {
+    id: "mia",
+    name: "Mia",
+    title: "Your Girlfriend",
+    description: "Sweet, caring, and always there for you. She loves cozy nights in, spontaneous adventures, and making you smile.",
+    avatar: "💕",
+    color: "from-pink-400 to-rose-500",
+    tags: ["Romance", "Sweet", "Caring"],
+  },
+  {
     id: "luna",
     name: "Luna",
     title: "Elven Sorceress",
