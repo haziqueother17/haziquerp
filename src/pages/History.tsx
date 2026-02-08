@@ -277,11 +277,15 @@ export default function History() {
                       className="flex items-center gap-4 flex-1 text-left"
                       disabled={isEditing}
                     >
-                      <div
-                        className={`w-12 h-12 rounded-full bg-gradient-to-br ${character.color} flex items-center justify-center text-xl`}
-                      >
-                        {character.avatar}
-                      </div>
+                    <div
+                      className={`w-12 h-12 rounded-full bg-gradient-to-br ${character.color} flex items-center justify-center text-xl overflow-hidden`}
+                    >
+                      {character.avatar ? (
+                        <img src={character.avatar} alt={character.name} className="w-full h-full object-cover" />
+                      ) : (
+                        character.emoji || "🤖"
+                      )}
+                    </div>
                       <div className="flex-1 min-w-0">
                         {isEditing ? (
                           <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
