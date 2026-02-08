@@ -41,6 +41,103 @@ export type Database = {
         }
         Relationships: []
       }
+      group_chats: {
+        Row: {
+          character_id: string
+          created_at: string
+          created_by: string
+          id: string
+          invite_code: string
+          name: string | null
+        }
+        Insert: {
+          character_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          invite_code?: string
+          name?: string | null
+        }
+        Update: {
+          character_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          invite_code?: string
+          name?: string | null
+        }
+        Relationships: []
+      }
+      group_messages: {
+        Row: {
+          content: string
+          created_at: string
+          group_chat_id: string
+          id: string
+          role: string
+          sender_id: string | null
+          sender_name: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          group_chat_id: string
+          id?: string
+          role: string
+          sender_id?: string | null
+          sender_name?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          group_chat_id?: string
+          id?: string
+          role?: string
+          sender_id?: string | null
+          sender_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_messages_group_chat_id_fkey"
+            columns: ["group_chat_id"]
+            isOneToOne: false
+            referencedRelation: "group_chats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_participants: {
+        Row: {
+          display_name: string | null
+          group_chat_id: string
+          id: string
+          joined_at: string
+          user_id: string
+        }
+        Insert: {
+          display_name?: string | null
+          group_chat_id: string
+          id?: string
+          joined_at?: string
+          user_id: string
+        }
+        Update: {
+          display_name?: string | null
+          group_chat_id?: string
+          id?: string
+          joined_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_participants_group_chat_id_fkey"
+            columns: ["group_chat_id"]
+            isOneToOne: false
+            referencedRelation: "group_chats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string

@@ -8,6 +8,8 @@ import Chat from "./pages/Chat";
 import Auth from "./pages/Auth";
 import SharedChat from "./pages/SharedChat";
 import History from "./pages/History";
+import GroupChat from "./pages/GroupChat";
+import JoinGroup from "./pages/JoinGroup";
 import NotFound from "./pages/NotFound";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
@@ -22,6 +24,7 @@ const App = () => (
         <Routes>
           <Route path="/auth" element={<Auth />} />
           <Route path="/shared/:shareId" element={<SharedChat />} />
+          <Route path="/join/:inviteCode" element={<JoinGroup />} />
           <Route
             path="/"
             element={
@@ -35,7 +38,7 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Chat />
-            </ProtectedRoute>
+              </ProtectedRoute>
             }
           />
           <Route
@@ -43,6 +46,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <History />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/group/:groupId"
+            element={
+              <ProtectedRoute>
+                <GroupChat />
               </ProtectedRoute>
             }
           />

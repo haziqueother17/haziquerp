@@ -1,12 +1,14 @@
 import { useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Sparkles, RotateCcw, Share2 } from "lucide-react";
+import { ArrowLeft, Sparkles, RotateCcw, Share2, Users } from "lucide-react";
 import { characters } from "@/lib/characters";
 import { ChatMessage } from "@/components/ChatMessage";
 import { ChatInput } from "@/components/ChatInput";
 import { useRoleplayChat } from "@/hooks/useRoleplayChat";
 import { useShareChat } from "@/hooks/useShareChat";
+import { createGroupChat } from "@/hooks/useGroupChat";
+import { toast } from "sonner";
 
 export default function Chat() {
   const { characterId } = useParams<{ characterId: string }>();
@@ -56,6 +58,22 @@ export default function Chat() {
               <p className="text-xs text-muted-foreground">{character.title}</p>
             </div>
           </div>
+
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={async () => {
+              const groupId = await createGroupChat(characterId || "");
+              if (groupId) {
+                toast.success("Group created! Share the invite link.");
+                navigate(`/group/${groupId}`);
+              }
+            }}
+            className="p-2 rounded-lg hover:bg-secondary transition-colors"
+            title="Start group chat"
+          >
+            <Users className="w-5 h-5" />
+          </motion.button>
 
           <motion.button
             whileHover={{ scale: 1.05 }}
