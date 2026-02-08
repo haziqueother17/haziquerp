@@ -49,9 +49,13 @@ export default function Chat() {
 
           <div className="flex items-center gap-3 flex-1">
             <div
-              className={`w-10 h-10 rounded-full bg-gradient-to-br ${character.color} flex items-center justify-center text-xl`}
+              className={`w-10 h-10 rounded-full bg-gradient-to-br ${character.color} flex items-center justify-center text-xl overflow-hidden`}
             >
-              {character.avatar}
+              {character.avatar ? (
+                <img src={character.avatar} alt={character.name} className="w-full h-full object-cover" />
+              ) : (
+                character.emoji || "🤖"
+              )}
             </div>
             <div>
               <h1 className="font-display font-semibold">{character.name}</h1>
@@ -108,9 +112,13 @@ export default function Chat() {
               className="text-center py-20"
             >
               <div
-                className={`w-20 h-20 mx-auto rounded-full bg-gradient-to-br ${character.color} flex items-center justify-center text-4xl mb-6 animate-float`}
+                className={`w-20 h-20 mx-auto rounded-full bg-gradient-to-br ${character.color} flex items-center justify-center text-4xl mb-6 animate-float overflow-hidden`}
               >
-                {character.avatar}
+                {character.avatar ? (
+                  <img src={character.avatar} alt={character.name} className="w-full h-full object-cover" />
+                ) : (
+                  character.emoji || "🤖"
+                )}
               </div>
               <h2 className="font-display text-2xl font-semibold mb-2">
                 Chat with {character.name}
@@ -144,9 +152,13 @@ export default function Chat() {
                   className="flex gap-3"
                 >
                   <div
-                    className={`w-10 h-10 rounded-full bg-gradient-to-br ${character.color} flex items-center justify-center text-lg`}
+                    className={`w-10 h-10 rounded-full bg-gradient-to-br ${character.color} flex items-center justify-center text-lg overflow-hidden`}
                   >
-                    {character.avatar}
+                    {character.avatar ? (
+                      <img src={character.avatar} alt={character.name} className="w-full h-full object-cover" />
+                    ) : (
+                      character.emoji || "🤖"
+                    )}
                   </div>
                   <div className="glass rounded-2xl rounded-tl-sm px-4 py-3">
                     <div className="flex gap-1">
