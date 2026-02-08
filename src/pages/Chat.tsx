@@ -1,11 +1,12 @@
 import { useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Sparkles, RotateCcw } from "lucide-react";
+import { ArrowLeft, Sparkles, RotateCcw, Share2 } from "lucide-react";
 import { characters } from "@/lib/characters";
 import { ChatMessage } from "@/components/ChatMessage";
 import { ChatInput } from "@/components/ChatInput";
 import { useRoleplayChat } from "@/hooks/useRoleplayChat";
+import { useShareChat } from "@/hooks/useShareChat";
 
 export default function Chat() {
   const { characterId } = useParams<{ characterId: string }>();
@@ -16,6 +17,7 @@ export default function Chat() {
   const { messages, isLoading, sendMessage, clearMessages } = useRoleplayChat(
     characterId || "luna"
   );
+  const { shareChat, isSharing } = useShareChat();
 
   useEffect(() => {
     if (!character) {
@@ -54,6 +56,17 @@ export default function Chat() {
               <p className="text-xs text-muted-foreground">{character.title}</p>
             </div>
           </div>
+
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => shareChat(characterId || "", messages)}
+            disabled={isSharing || messages.length === 0}
+            className="p-2 rounded-lg hover:bg-secondary transition-colors disabled:opacity-50"
+            title="Share conversation"
+          >
+            <Share2 className="w-5 h-5" />
+          </motion.button>
 
           <motion.button
             whileHover={{ scale: 1.05 }}
