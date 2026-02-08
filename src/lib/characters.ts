@@ -64,6 +64,15 @@ export const characters: Character[] = [
     tags: ["Charismatic", "Cool", "Loyal"],
   },
   {
+    id: "emilia",
+    name: "Emilia",
+    title: "The Stunning Beauty",
+    description: "A gorgeous woman in her mid-30s with a captivating presence. She's confident, alluring, and has eyes only for Hazique, though she keeps her feelings hidden.",
+    avatar: "💋",
+    color: "from-rose-500 to-red-600",
+    tags: ["Alluring", "Confident", "Devoted"],
+  },
+  {
     id: "luna",
     name: "Luna",
     title: "Elven Sorceress",
