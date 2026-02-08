@@ -118,8 +118,25 @@ ROLEPLAY RULES:
     if (!response.ok) {
       const errorText = await response.text();
       console.error("AI gateway error:", response.status, errorText);
-      return new Response(JSON.stringify({ error: "AI service temporarily unavailable" }), {
-        status: 500,
+      
+      // Handle credits/payment errors
+      if (response.status === 402 || errorText.includes("Not enough credits") || errorText.includes("payment_required")) {
+        return new Response(JSON.stringify({ error: "Out of credits. Please check your Lovable account." }), {
+          status: 402,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      
+      // Handle rate limiting
+      if (response.status === 429) {
+        return new Response(JSON.stringify({ error: "Too many requests. Please wait a moment." }), {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      
+      return new Response(JSON.stringify({ error: "AI service temporarily unavailable. Please try again." }), {
+        status: 503,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
