@@ -10,6 +10,7 @@ import SharedChat from "./pages/SharedChat";
 import History from "./pages/History";
 import GroupChat from "./pages/GroupChat";
 import JoinGroup from "./pages/JoinGroup";
+import MyGroups from "./pages/MyGroups";
 import NotFound from "./pages/NotFound";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
@@ -54,6 +55,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <GroupChat />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/groups"
+            element={
+              <ProtectedRoute>
+                <MyGroups />
               </ProtectedRoute>
             }
           />
