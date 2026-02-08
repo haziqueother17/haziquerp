@@ -62,6 +62,65 @@ export type Database = {
         }
         Relationships: []
       }
+      shared_chats: {
+        Row: {
+          character_id: string
+          created_at: string
+          id: string
+          share_id: string
+          title: string | null
+          user_id: string
+        }
+        Insert: {
+          character_id: string
+          created_at?: string
+          id?: string
+          share_id?: string
+          title?: string | null
+          user_id: string
+        }
+        Update: {
+          character_id?: string
+          created_at?: string
+          id?: string
+          share_id?: string
+          title?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      shared_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          role: string
+          shared_chat_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          role: string
+          shared_chat_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+          shared_chat_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_messages_shared_chat_id_fkey"
+            columns: ["shared_chat_id"]
+            isOneToOne: false
+            referencedRelation: "shared_chats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
