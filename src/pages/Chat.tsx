@@ -16,8 +16,8 @@ export default function Chat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const character = characters.find((c) => c.id === characterId);
-  const { messages, isLoading, sendMessage, clearMessages } = useRoleplayChat(
-    characterId || "luna"
+  const { messages, isLoading, sendMessage, clearMessages, editMessage } = useRoleplayChat(
+    characterId || "assistant"
   );
   const { shareChat, isSharing } = useShareChat();
 
@@ -136,11 +136,14 @@ export default function Chat() {
               <AnimatePresence mode="popLayout">
                 {messages.map((message, index) => (
                   <ChatMessage
-                    key={index}
+                    key={`${index}-${message.content.slice(0, 20)}`}
                     role={message.role}
                     content={message.content}
                     character={character}
                     imageUrl={message.imageUrl}
+                    messageIndex={index}
+                    onEdit={editMessage}
+                    isLoading={isLoading}
                   />
                 ))}
               </AnimatePresence>
