@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Sparkles, MessageCircle, LogOut, History, Users } from "lucide-react";
+import { Sparkles, MessageCircle, LogOut, History, Users, Image } from "lucide-react";
 import { characters } from "@/lib/characters";
 import { CharacterCard } from "@/components/CharacterCard";
 import { useAuth } from "@/hooks/useAuth";
@@ -32,6 +32,15 @@ export default function Index() {
           >
             <Users className="w-4 h-4 mr-2" />
             Groups
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/gallery")}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <Image className="w-4 h-4 mr-2" />
+            Gallery
           </Button>
         </div>
         <Button

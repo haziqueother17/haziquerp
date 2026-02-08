@@ -11,6 +11,7 @@ import History from "./pages/History";
 import GroupChat from "./pages/GroupChat";
 import JoinGroup from "./pages/JoinGroup";
 import MyGroups from "./pages/MyGroups";
+import Gallery from "./pages/Gallery";
 import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -65,6 +66,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <MyGroups />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/gallery"
+            element={
+              <ProtectedRoute>
+                <Gallery />
               </ProtectedRoute>
             }
           />
