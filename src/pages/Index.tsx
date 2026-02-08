@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Sparkles, MessageCircle, LogOut } from "lucide-react";
+import { Sparkles, MessageCircle, LogOut, History } from "lucide-react";
 import { characters } from "@/lib/characters";
 import { CharacterCard } from "@/components/CharacterCard";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,8 +12,17 @@ export default function Index() {
 
   return (
     <div className="min-h-screen">
-      {/* Header with logout */}
-      <header className="absolute top-0 right-0 p-4 z-10">
+      {/* Header */}
+      <header className="absolute top-0 left-0 right-0 p-4 z-10 flex justify-between items-center">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate("/history")}
+          className="text-muted-foreground hover:text-foreground"
+        >
+          <History className="w-4 h-4 mr-2" />
+          History
+        </Button>
         <Button
           variant="ghost"
           size="sm"
