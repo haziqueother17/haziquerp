@@ -26,6 +26,7 @@ export function useGroupChat(groupId: string) {
   const [userName, setUserName] = useState<string | null>(null);
   const [characterId, setCharacterId] = useState<string>("luna");
   const [inviteCode, setInviteCode] = useState<string>("");
+  const [groupName, setGroupName] = useState<string | null>(null);
 
   // Load group info, messages, and set up realtime
   useEffect(() => {
@@ -47,13 +48,14 @@ export function useGroupChat(groupId: string) {
       // Get group info
       const { data: group } = await supabase
         .from("group_chats")
-        .select("character_id, invite_code")
+        .select("character_id, invite_code, name")
         .eq("id", groupId)
         .single();
 
       if (group) {
         setCharacterId(group.character_id);
         setInviteCode(group.invite_code);
+        setGroupName(group.name);
       }
 
       // Load existing messages
@@ -243,7 +245,24 @@ export function useGroupChat(groupId: string) {
     inviteCode, 
     characterId,
     userId,
+    groupName,
+    setGroupName,
   };
+}
+
+export async function renameGroupChat(groupId: string, newName: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("group_chats")
+    .update({ name: newName })
+    .eq("id", groupId);
+
+  if (error) {
+    toast.error("Failed to rename chat");
+    return false;
+  }
+
+  toast.success("Chat renamed!");
+  return true;
 }
 
 export async function createGroupChat(characterId: string, name?: string): Promise<string | null> {

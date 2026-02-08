@@ -1,17 +1,28 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Users, Copy, Check } from "lucide-react";
+import { ArrowLeft, Users, Copy, Check, Pencil } from "lucide-react";
 import { characters } from "@/lib/characters";
 import { ChatInput } from "@/components/ChatInput";
-import { useGroupChat } from "@/hooks/useGroupChat";
+import { useGroupChat, renameGroupChat } from "@/hooks/useGroupChat";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export default function GroupChat() {
   const { groupId } = useParams<{ groupId: string }>();
   const navigate = useNavigate();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [newName, setNewName] = useState("");
 
   const { 
     messages, 
@@ -21,9 +32,36 @@ export default function GroupChat() {
     inviteCode, 
     characterId,
     userId,
+    groupName,
+    setGroupName,
   } = useGroupChat(groupId || "");
 
   const character = characters.find((c) => c.id === characterId) || characters[0];
+
+  const truncateName = (name: string) => {
+    const words = name.trim().split(/\s+/).slice(0, 3);
+    return words.join(" ");
+  };
+
+  const handleRename = async () => {
+    if (!groupId) return;
+    const truncated = truncateName(newName);
+    if (!truncated) {
+      toast.error("Name cannot be empty");
+      return;
+    }
+    const success = await renameGroupChat(groupId, truncated);
+    if (success) {
+      setGroupName(truncated);
+      setRenameOpen(false);
+      setNewName("");
+    }
+  };
+
+  const openRenameDialog = () => {
+    setNewName(groupName || "");
+    setRenameOpen(true);
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -62,8 +100,21 @@ export default function GroupChat() {
             >
               {character.avatar}
             </div>
-            <div>
-              <h1 className="font-display font-semibold">Group Chat with {character.name}</h1>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <h1 className="font-display font-semibold truncate">
+                  {groupName || `Chat with ${character.name}`}
+                </h1>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={openRenameDialog}
+                  className="p-1 rounded hover:bg-secondary transition-colors shrink-0"
+                  title="Rename chat"
+                >
+                  <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                </motion.button>
+              </div>
               <p className="text-xs text-muted-foreground flex items-center gap-1">
                 <Users className="w-3 h-3" />
                 {participants.length} {participants.length === 1 ? "person" : "people"}
@@ -114,7 +165,7 @@ export default function GroupChat() {
                 {character.avatar}
               </div>
               <h2 className="font-display text-2xl font-semibold mb-2">
-                Group Chat with {character.name}
+                {groupName || `Chat with ${character.name}`}
               </h2>
               <p className="text-muted-foreground max-w-md mx-auto mb-4">
                 Invite friends to chat together! Share the invite link.
@@ -214,6 +265,33 @@ export default function GroupChat() {
           />
         </div>
       </footer>
+
+      {/* Rename Dialog */}
+      <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rename Chat</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Input
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              placeholder="Enter chat name (max 3 words)"
+              maxLength={50}
+              onKeyDown={(e) => e.key === "Enter" && handleRename()}
+            />
+            <p className="text-xs text-muted-foreground mt-2">
+              Name will be limited to 3 words
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRenameOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleRename}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
