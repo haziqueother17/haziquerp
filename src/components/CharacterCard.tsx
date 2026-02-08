@@ -19,8 +19,12 @@ export function CharacterCard({ character, onClick }: CharacterCardProps) {
         
         <div className="relative p-6">
           <div className="flex items-start gap-4">
-            <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${character.color} flex items-center justify-center text-3xl shadow-lg`}>
-              {character.avatar}
+          <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${character.color} flex items-center justify-center text-3xl shadow-lg overflow-hidden`}>
+              {character.avatar ? (
+                <img src={character.avatar} alt={character.name} className="w-full h-full object-cover" />
+              ) : (
+                character.emoji || "🤖"
+              )}
             </div>
             
             <div className="flex-1 min-w-0">

@@ -1,9 +1,18 @@
+import miaAvatar from "@/assets/characters/mia.jpg";
+import hummuAvatar from "@/assets/characters/hummu.jpg";
+import husharsGirlAvatar from "@/assets/characters/hushars-girl.jpg";
+import tanzilAvatar from "@/assets/characters/tanzil.jpg";
+import ziyanAvatar from "@/assets/characters/ziyan.jpg";
+import haziqueAvatar from "@/assets/characters/hazique.jpg";
+import emiliaAvatar from "@/assets/characters/emilia.jpg";
+
 export interface Character {
   id: string;
   name: string;
   title: string;
   description: string;
   avatar: string;
+  emoji?: string;
   color: string;
   tags: string[];
 }
@@ -14,7 +23,8 @@ export const characters: Character[] = [
     name: "Mia",
     title: "Your Girlfriend",
     description: "Sweet, caring, and always there for you. She loves cozy nights in, spontaneous adventures, and making you smile.",
-    avatar: "💕",
+    avatar: miaAvatar,
+    emoji: "💕",
     color: "from-pink-400 to-rose-500",
     tags: ["Romance", "Sweet", "Caring"],
   },
@@ -23,7 +33,8 @@ export const characters: Character[] = [
     name: "Hummu",
     title: "The Sweet Ex",
     description: "A gentle and devoted soul who still carries feelings from the past. She's soft-spoken, caring, and always eager to please.",
-    avatar: "🌸",
+    avatar: hummuAvatar,
+    emoji: "🌸",
     color: "from-rose-300 to-pink-400",
     tags: ["Sweet", "Gentle", "Devoted"],
   },
@@ -32,7 +43,8 @@ export const characters: Character[] = [
     name: "Hushar's Girl",
     title: "Secret Admirer",
     description: "A shy and affectionate girl who can't help but blush around Hazique. She's devoted, gentle, and dreams of catching his attention.",
-    avatar: "💗",
+    avatar: husharsGirlAvatar,
+    emoji: "💗",
     color: "from-fuchsia-400 to-pink-500",
     tags: ["Shy", "Devoted", "Romantic"],
   },
@@ -41,7 +53,8 @@ export const characters: Character[] = [
     name: "Tanzil",
     title: "The Charming Leader",
     description: "A confident and caring Muslim guy who leads his friend group with wisdom and humor. Best friends with Ziyan and Hazique.",
-    avatar: "🌙",
+    avatar: tanzilAvatar,
+    emoji: "🌙",
     color: "from-emerald-500 to-teal-600",
     tags: ["Confident", "Leader", "Loyal"],
   },
@@ -50,7 +63,8 @@ export const characters: Character[] = [
     name: "Ziyan",
     title: "The Supportive Friend",
     description: "The calm and thoughtful one in the group. Always there for his brothers Tanzil and Hazique with wise advice and a listening ear.",
-    avatar: "⭐",
+    avatar: ziyanAvatar,
+    emoji: "⭐",
     color: "from-blue-500 to-indigo-600",
     tags: ["Wise", "Calm", "Supportive"],
   },
@@ -59,7 +73,8 @@ export const characters: Character[] = [
     name: "Hazique",
     title: "The Cool One",
     description: "The laid-back yet charismatic one. Best friends with Tanzil and Ziyan, he's got that effortless charm that catches attention.",
-    avatar: "🔥",
+    avatar: haziqueAvatar,
+    emoji: "🔥",
     color: "from-orange-500 to-red-600",
     tags: ["Charismatic", "Cool", "Loyal"],
   },
@@ -68,7 +83,8 @@ export const characters: Character[] = [
     name: "Emilia",
     title: "The Stunning Beauty",
     description: "A gorgeous former actress in her mid-30s with a captivating presence and curvy figure. She's confident, alluring, and completely devoted to Hazique.",
-    avatar: "💋",
+    avatar: emiliaAvatar,
+    emoji: "💋",
     color: "from-rose-500 to-red-600",
     tags: ["Alluring", "Confident", "Devoted"],
   },
@@ -77,7 +93,8 @@ export const characters: Character[] = [
     name: "AI Assistant",
     title: "Smart Helper",
     description: "A helpful and intelligent AI assistant ready to answer questions, help with tasks, and have meaningful conversations.",
-    avatar: "🤖",
+    avatar: "",
+    emoji: "🤖",
     color: "from-cyan-500 to-blue-600",
     tags: ["Helpful", "Smart", "Versatile"],
   },

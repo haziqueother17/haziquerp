@@ -19,7 +19,7 @@ export function ChatMessage({ role, content, character, imageUrl }: ChatMessageP
       className={`flex gap-3 ${isUser ? "flex-row-reverse" : ""}`}
     >
       <div
-        className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-lg ${
+        className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-lg overflow-hidden ${
           isUser
             ? "bg-primary text-primary-foreground"
             : character
@@ -27,7 +27,13 @@ export function ChatMessage({ role, content, character, imageUrl }: ChatMessageP
             : "bg-secondary"
         }`}
       >
-        {isUser ? "👤" : character?.avatar || "🤖"}
+        {isUser ? (
+          "👤"
+        ) : character?.avatar ? (
+          <img src={character.avatar} alt={character.name} className="w-full h-full object-cover" />
+        ) : (
+          character?.emoji || "🤖"
+        )}
       </div>
 
       <div
