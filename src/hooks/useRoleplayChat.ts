@@ -1,5 +1,6 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
   role: "user" | "assistant";
@@ -11,11 +12,48 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/roleplay-cha
 export function useRoleplayChat(characterId: string) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // Load existing messages and get user
+  useEffect(() => {
+    const loadMessages = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUserId(user?.id || null);
+      
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("chat_messages")
+        .select("role, content")
+        .eq("user_id", user.id)
+        .eq("character_id", characterId)
+        .order("created_at", { ascending: true });
+
+      if (!error && data) {
+        setMessages(data.map(m => ({ role: m.role as "user" | "assistant", content: m.content })));
+      }
+    };
+
+    loadMessages();
+  }, [characterId]);
+
+  const saveMessage = useCallback(async (role: string, content: string) => {
+    if (!userId) return;
+    await supabase.from("chat_messages").insert({
+      user_id: userId,
+      character_id: characterId,
+      role,
+      content,
+    });
+  }, [userId, characterId]);
 
   const sendMessage = useCallback(async (content: string) => {
     const userMessage: Message = { role: "user", content };
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
+
+    // Save user message immediately
+    await saveMessage("user", content);
 
     let assistantContent = "";
 
@@ -94,17 +132,29 @@ export function useRoleplayChat(characterId: string) {
           }
         }
       }
+
+      // Save assistant response after streaming completes
+      if (assistantContent) {
+        await saveMessage("assistant", assistantContent);
+      }
     } catch (error) {
       console.error("Chat error:", error);
       toast.error("Failed to send message. Please try again.");
     } finally {
       setIsLoading(false);
     }
-  }, [messages, characterId]);
+  }, [messages, characterId, saveMessage]);
 
-  const clearMessages = useCallback(() => {
+  const clearMessages = useCallback(async () => {
+    if (userId) {
+      await supabase
+        .from("chat_messages")
+        .delete()
+        .eq("user_id", userId)
+        .eq("character_id", characterId);
+    }
     setMessages([]);
-  }, []);
+  }, [userId, characterId]);
 
   return { messages, isLoading, sendMessage, clearMessages };
 }
