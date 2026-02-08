@@ -132,6 +132,7 @@ export default function Chat() {
                     role={message.role}
                     content={message.content}
                     character={character}
+                    imageUrl={message.imageUrl}
                   />
                 ))}
               </AnimatePresence>

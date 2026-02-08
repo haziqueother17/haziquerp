@@ -6,9 +6,10 @@ interface ChatMessageProps {
   role: "user" | "assistant";
   content: string;
   character?: Character;
+  imageUrl?: string;
 }
 
-export function ChatMessage({ role, content, character }: ChatMessageProps) {
+export function ChatMessage({ role, content, character, imageUrl }: ChatMessageProps) {
   const isUser = role === "user";
 
   return (
@@ -36,18 +37,33 @@ export function ChatMessage({ role, content, character }: ChatMessageProps) {
             : "glass rounded-tl-sm"
         }`}
       >
-        <div className="prose prose-sm prose-invert max-w-none">
-          <ReactMarkdown
-            components={{
-              p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-              em: ({ children }) => (
-                <em className="text-muted-foreground italic">{children}</em>
-              ),
-            }}
-          >
-            {content}
-          </ReactMarkdown>
-        </div>
+        {/* Image attachment */}
+        {imageUrl && (
+          <div className="mb-2">
+            <img
+              src={imageUrl}
+              alt="Shared content"
+              className="max-w-full max-h-64 rounded-lg object-cover cursor-pointer hover:opacity-90 transition-opacity"
+              onClick={() => window.open(imageUrl, "_blank")}
+            />
+          </div>
+        )}
+        
+        {/* Text content */}
+        {content && (
+          <div className="prose prose-sm prose-invert max-w-none">
+            <ReactMarkdown
+              components={{
+                p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                em: ({ children }) => (
+                  <em className="text-muted-foreground italic">{children}</em>
+                ),
+              }}
+            >
+              {content}
+            </ReactMarkdown>
+          </div>
+        )}
       </div>
     </motion.div>
   );
