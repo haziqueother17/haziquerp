@@ -61,10 +61,10 @@ serve(async (req) => {
 
   try {
     const { messages, characterId } = await req.json();
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
     
-    if (!OPENAI_API_KEY) {
-      throw new Error("OPENAI_API_KEY is not configured");
+    if (!GEMINI_API_KEY) {
+      throw new Error("GEMINI_API_KEY is not configured");
     }
 
     const character = characters[characterId] || characters.assistant;
@@ -85,52 +85,69 @@ ROLEPLAY RULES:
 - When the user shares an image, describe what you see and react to it in character
 - If the user sends a photo, acknowledge it naturally as if they're sharing a moment with you`;
 
-    // Process messages to handle image content for vision
-    const processedMessages = messages.map((msg: any) => {
-      if (msg.role === "user" && msg.imageUrl) {
-        return {
-          role: "user",
-          content: [
-            { type: "text", text: msg.content || "What do you think of this?" },
-            { type: "image_url", image_url: { url: msg.imageUrl } }
-          ]
-        };
-      }
-      return msg;
+    // Process messages for Gemini format
+    const geminiContents = [];
+    
+    // Add system instruction as first user message
+    geminiContents.push({
+      role: "user",
+      parts: [{ text: systemPrompt }]
+    });
+    geminiContents.push({
+      role: "model",
+      parts: [{ text: "I understand. I'll stay in character and follow these guidelines." }]
     });
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...processedMessages,
-        ],
-        stream: true,
-      }),
-    });
+    // Convert messages to Gemini format
+    for (const msg of messages) {
+      const role = msg.role === "assistant" ? "model" : "user";
+      const parts: any[] = [];
+      
+      if (msg.imageUrl) {
+        parts.push({ text: msg.content || "What do you think of this?" });
+        // For Gemini, we need to fetch the image and convert to base64
+        // For now, just describe that an image was shared
+        parts.push({ text: "[User shared an image]" });
+      } else {
+        parts.push({ text: msg.content });
+      }
+      
+      geminiContents.push({ role, parts });
+    }
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?alt=sse&key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: geminiContents,
+          generationConfig: {
+            temperature: 0.9,
+            maxOutputTokens: 1024,
+          },
+        }),
+      }
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      
-      // Handle credits/payment errors
-      if (response.status === 402 || errorText.includes("Not enough credits") || errorText.includes("payment_required")) {
-        return new Response(JSON.stringify({ error: "Out of credits. Please check your Lovable account." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+      console.error("Gemini API error:", response.status, errorText);
       
       // Handle rate limiting
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Too many requests. Please wait a moment." }), {
           status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      
+      // Handle quota errors
+      if (response.status === 403 || errorText.includes("quota")) {
+        return new Response(JSON.stringify({ error: "API quota exceeded. Please check your Google Cloud billing." }), {
+          status: 402,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -141,7 +158,43 @@ ROLEPLAY RULES:
       });
     }
 
-    return new Response(response.body, {
+    // Transform Gemini SSE to OpenAI-compatible SSE format
+    const transformStream = new TransformStream({
+      transform(chunk, controller) {
+        const text = new TextDecoder().decode(chunk);
+        const lines = text.split('\n');
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              const content = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+              
+              if (content) {
+                // Convert to OpenAI format
+                const openAIFormat = {
+                  choices: [{
+                    delta: { content },
+                    index: 0,
+                    finish_reason: null
+                  }]
+                };
+                controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify(openAIFormat)}\n\n`));
+              }
+              
+              // Check for finish
+              if (data.candidates?.[0]?.finishReason) {
+                controller.enqueue(new TextEncoder().encode('data: [DONE]\n\n'));
+              }
+            } catch (e) {
+              // Skip malformed JSON
+            }
+          }
+        }
+      }
+    });
+
+    return new Response(response.body?.pipeThrough(transformStream), {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (error) {
