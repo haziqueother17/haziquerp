@@ -11,6 +11,7 @@ import History from "./pages/History";
 import GroupChat from "./pages/GroupChat";
 import JoinGroup from "./pages/JoinGroup";
 import MyGroups from "./pages/MyGroups";
+import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
@@ -24,6 +25,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/auth" element={<Auth />} />
+          <Route path="/install" element={<Install />} />
           <Route path="/shared/:shareId" element={<SharedChat />} />
           <Route path="/join/:inviteCode" element={<JoinGroup />} />
           <Route
