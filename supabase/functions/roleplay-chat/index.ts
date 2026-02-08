@@ -91,7 +91,23 @@ ROLEPLAY RULES:
 - React with emotion and personality
 - Ask questions to keep the conversation going
 - Never break character or mention being an AI
-- Be natural and conversational, not formal`;
+- Be natural and conversational, not formal
+- When the user shares an image, describe what you see and react to it in character
+- If the user sends a photo, acknowledge it naturally as if they're sharing a moment with you`;
+
+    // Process messages to handle image content for vision
+    const processedMessages = messages.map((msg: any) => {
+      if (msg.role === "user" && msg.imageUrl) {
+        return {
+          role: "user",
+          content: [
+            { type: "text", text: msg.content || "What do you think of this?" },
+            { type: "image_url", image_url: { url: msg.imageUrl } }
+          ]
+        };
+      }
+      return msg;
+    });
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -100,10 +116,10 @@ ROLEPLAY RULES:
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
-          ...messages,
+          ...processedMessages,
         ],
         stream: true,
       }),

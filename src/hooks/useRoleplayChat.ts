@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface Message {
   role: "user" | "assistant";
   content: string;
+  imageUrl?: string;
 }
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/roleplay-chat`;
@@ -47,13 +48,16 @@ export function useRoleplayChat(characterId: string) {
     });
   }, [userId, characterId]);
 
-  const sendMessage = useCallback(async (content: string) => {
-    const userMessage: Message = { role: "user", content };
+  const sendMessage = useCallback(async (content: string, imageUrl?: string) => {
+    const userMessage: Message = { role: "user", content, imageUrl };
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
-    // Save user message immediately
-    await saveMessage("user", content);
+    // Save user message immediately (include image reference in content if present)
+    const savedContent = imageUrl 
+      ? `${content}\n[Image: ${imageUrl}]`
+      : content;
+    await saveMessage("user", savedContent);
 
     let assistantContent = "";
 
@@ -71,6 +75,18 @@ export function useRoleplayChat(characterId: string) {
     };
 
     try {
+      // Prepare messages for API - include image if present
+      const apiMessages = [...messages, userMessage].map(msg => {
+        if (msg.imageUrl) {
+          return {
+            role: msg.role,
+            content: msg.content || "What do you think of this?",
+            imageUrl: msg.imageUrl
+          };
+        }
+        return { role: msg.role, content: msg.content };
+      });
+
       const response = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
@@ -78,7 +94,7 @@ export function useRoleplayChat(characterId: string) {
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
         body: JSON.stringify({
-          messages: [...messages, userMessage],
+          messages: apiMessages,
           characterId,
         }),
       });
