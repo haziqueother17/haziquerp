@@ -96,14 +96,14 @@ ROLEPLAY RULES:
       }))
     ];
 
-    const response = await fetch("https://api.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-3-flash-preview",
         messages: aiMessages,
         stream: true,
         temperature: 0.9,
@@ -113,15 +113,19 @@ ROLEPLAY RULES:
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Lovable AI error:", response.status, errorText);
+      console.error("AI gateway error:", response.status, errorText);
 
-      return new Response(
-        JSON.stringify({ error: "AI service temporarily unavailable. Please try again." }),
-        {
-          status: 503,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      const errorMessage =
+        response.status === 429
+          ? "Too many requests right now. Please wait a moment and try again."
+          : response.status === 402
+            ? "AI credits are exhausted for this workspace. Please add credits and try again."
+            : "AI service temporarily unavailable. Please try again.";
+
+      return new Response(JSON.stringify({ error: errorMessage }), {
+        status: response.status === 429 || response.status === 402 ? response.status : 503,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Stream the response directly (already in OpenAI format)
