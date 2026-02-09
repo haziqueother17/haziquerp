@@ -61,10 +61,10 @@ serve(async (req) => {
 
   try {
     const { messages, characterId } = await req.json();
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
-    if (!GEMINI_API_KEY) {
-      throw new Error("GEMINI_API_KEY is not configured");
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY is not configured");
     }
 
     const character = characters[characterId] || characters.assistant;
@@ -85,106 +85,35 @@ ROLEPLAY RULES:
 - When the user shares an image, describe what you see and react to it in character
 - If the user sends a photo, acknowledge it naturally as if they're sharing a moment with you`;
 
-    // Process messages for Gemini format
-    const geminiContents = [];
-    
-    // Add system instruction as first user message
-    geminiContents.push({
-      role: "user",
-      parts: [{ text: systemPrompt }]
-    });
-    geminiContents.push({
-      role: "model",
-      parts: [{ text: "I understand. I'll stay in character and follow these guidelines." }]
-    });
+    // Build messages array for Lovable AI (OpenAI-compatible format)
+    const aiMessages = [
+      { role: "system", content: systemPrompt },
+      ...messages.map((msg: any) => ({
+        role: msg.role,
+        content: msg.imageUrl 
+          ? `${msg.content || "What do you think of this?"}\n[User shared an image]`
+          : msg.content
+      }))
+    ];
 
-    // Convert messages to Gemini format
-    for (const msg of messages) {
-      const role = msg.role === "assistant" ? "model" : "user";
-      const parts: any[] = [];
-      
-      if (msg.imageUrl) {
-        parts.push({ text: msg.content || "What do you think of this?" });
-        // For Gemini, we need to fetch the image and convert to base64
-        // For now, just describe that an image was shared
-        parts.push({ text: "[User shared an image]" });
-      } else {
-        parts.push({ text: msg.content });
-      }
-      
-      geminiContents.push({ role, parts });
-    }
-
-    const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?alt=sse",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": GEMINI_API_KEY,
-        },
-        body: JSON.stringify({
-          contents: geminiContents,
-          generationConfig: {
-            temperature: 0.9,
-            maxOutputTokens: 1024,
-          },
-        }),
-      }
-    );
+    const response = await fetch("https://api.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: aiMessages,
+        stream: true,
+        temperature: 0.9,
+        max_tokens: 1024,
+      }),
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Gemini API error:", response.status, errorText);
-
-      const extractRetryAfterSeconds = (raw: string): number | null => {
-        try {
-          const parsed = JSON.parse(raw);
-          const details = parsed?.error?.details;
-          if (Array.isArray(details)) {
-            const retry = details.find((d: any) =>
-              typeof d?.["@type"] === "string" && d["@type"].includes("RetryInfo")
-            );
-            const retryDelay = retry?.retryDelay as string | undefined;
-            if (typeof retryDelay === "string") {
-              const m = retryDelay.match(/([0-9.]+)s/);
-              if (m) return Math.ceil(Number(m[1]));
-            }
-          }
-        } catch {
-          // ignore
-        }
-
-        const m = raw.match(/retry in ([0-9.]+)s/i);
-        if (m) return Math.ceil(Number(m[1]));
-        return null;
-      };
-
-      const retryAfterSeconds = extractRetryAfterSeconds(errorText);
-
-      if (response.status === 429) {
-        const headers: Record<string, string> = {
-          ...corsHeaders,
-          "Content-Type": "application/json",
-        };
-        if (retryAfterSeconds) headers["Retry-After"] = String(retryAfterSeconds);
-
-        const zeroQuota = /limit:\s*0\b/i.test(errorText);
-        const message = zeroQuota
-          ? "Your Gemini API quota for this key/project is 0. Enable billing/quota, then try again."
-          : retryAfterSeconds
-            ? `Rate limited. Try again in ${retryAfterSeconds}s.`
-            : "Rate limited. Please wait and try again.";
-
-        return new Response(
-          JSON.stringify({
-            error: message,
-            errorCode: zeroQuota ? "quota_unavailable" : "rate_limited",
-            retryAfterSeconds: retryAfterSeconds ?? undefined,
-          }),
-          { status: 429, headers }
-        );
-      }
+      console.error("Lovable AI error:", response.status, errorText);
 
       return new Response(
         JSON.stringify({ error: "AI service temporarily unavailable. Please try again." }),
@@ -195,43 +124,8 @@ ROLEPLAY RULES:
       );
     }
 
-    // Transform Gemini SSE to OpenAI-compatible SSE format
-    const transformStream = new TransformStream({
-      transform(chunk, controller) {
-        const text = new TextDecoder().decode(chunk);
-        const lines = text.split('\n');
-        
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.slice(6));
-              const content = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-              
-              if (content) {
-                // Convert to OpenAI format
-                const openAIFormat = {
-                  choices: [{
-                    delta: { content },
-                    index: 0,
-                    finish_reason: null
-                  }]
-                };
-                controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify(openAIFormat)}\n\n`));
-              }
-              
-              // Check for finish
-              if (data.candidates?.[0]?.finishReason) {
-                controller.enqueue(new TextEncoder().encode('data: [DONE]\n\n'));
-              }
-            } catch (e) {
-              // Skip malformed JSON
-            }
-          }
-        }
-      }
-    });
-
-    return new Response(response.body?.pipeThrough(transformStream), {
+    // Stream the response directly (already in OpenAI format)
+    return new Response(response.body, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (error) {
